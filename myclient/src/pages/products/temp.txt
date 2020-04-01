@@ -1,0 +1,512 @@
+import React , {useState}from 'react'
+import { Field, reduxForm } from 'redux-form'
+import TextField from '@material-ui/core/TextField'
+import FormControlLabel from '@material-ui/core/FormControlLabel'
+import Radio from '@material-ui/core/Radio'
+import RadioGroup from '@material-ui/core/RadioGroup'
+import Button from "@material-ui/core/Button";
+import { Edit, FiberManualRecord, LocalMall, Save } from "@material-ui/icons";
+import { CircularProgress, Divider, Typography } from "@material-ui/core";
+import { useStyles } from "./styles";
+import normalizePhone from "../users/NormalizePhone";
+import CreatableSelect from 'react-select/creatable';
+import { Editor } from 'react-draft-wysiwyg';
+import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
+import { EditorState } from 'draft-js';
+import 'antd/dist/antd.min.css'
+import "./styles.css"
+import {
+  Cascader,
+  Switch as AntdSwitch,
+} from 'antd';
+import InputAdornment from "@material-ui/core/InputAdornment";
+import Switch from "@material-ui/core/Switch";
+import Card from "@material-ui/core/Card";
+import CardHeader from "@material-ui/core/CardHeader";
+import IconButton from "@material-ui/core/IconButton";
+import CardContent from "@material-ui/core/CardContent";
+import Grid from "@material-ui/core/Grid";
+import ImageUploader from "react-images-upload";
+import Fab from "@material-ui/core/Fab";
+import FormControl from "@material-ui/core/FormControl";
+import InputLabel from "@material-ui/core/InputLabel";
+import Input from "@material-ui/core/Input";
+import FormHelperText from "@material-ui/core/FormHelperText";
+
+
+const options3 = [
+  {
+    value: "zhejiang",
+    label: "Zhejiang",
+    children: [
+      {
+        value: "hangzhou",
+        label: "Hangzhou",
+        children: [
+          {
+            value: "xihu",
+            label: "West Lake"
+          },
+          {
+            value: "other",
+            label: "Other",
+            isLeaf: true
+          }
+        ]
+      },
+      {
+        value: "other",
+        label: "Other",
+        isLeaf: true
+      }
+    ]
+  },
+  {
+    value: "jiangsu",
+    label: "Jiangsu",
+    children: [
+      {
+        value: "nanjing",
+        label: "Nanjing",
+        children: [
+          {
+            value: "zhonghuamen",
+            label: "Zhong Hua Men"
+          },
+          {
+            value: "other",
+            label: "Other",
+            isLeaf: true
+          }
+        ]
+      },
+      {
+        value: 'other',
+        label:'Other',
+        isLeaf: true
+      }
+    ]
+  },
+  {
+    value: "other",
+    label: "Other",
+    isLeaf: true
+  }
+];
+
+
+const validate = values => {
+  const errors = {};
+  const requiredFields = [
+    'id',
+    'name',
+    'brand',
+    'price',
+    'categories',
+    'stock',
+    'status'
+  ];
+
+  requiredFields.forEach(field => {
+    if (!values[field]) {
+      errors[field] = 'Required'
+    }
+  });
+  if(
+    values.stock < 0 ||values.stock > 100000
+  ){
+     errors.stock = "Invalid Stock Amount"
+  }
+  if(values.price < 0 || values.price > 9999.99){
+    errors.price = "Invalid Price Amount"
+  }
+  return errors
+};
+
+
+const options = [
+  { value: 'chocolate', label: 'Chocolate' },
+  { value: 'strawberry', label: 'Strawberry' },
+  { value: 'vanilla', label: 'Vanilla' }
+]
+const options2 = [
+  { value: 'Shop-Vac', label: 'Shop-Vac', key:"Shop-Vac"},
+  { value: 'strawberry', label: 'Strawberry', key:"strawberry" },
+  { value: 'vanilla', label: 'Vanilla', key: "vanilla"}
+];
+
+const onChange = (currentNode, selectedNodes) => {
+  console.log('onChange::', currentNode, selectedNodes)
+};
+const filter = (inputValue, path) => {
+  return  path.some(option => option.label.toLowerCase().indexOf(inputValue.toLowerCase()) > -1);
+};
+
+const renderTextField = ({ label, input, type, name, placeholder,className,
+                           meta: { touched, invalid, error },
+                           ...custom
+                         }) => (
+    <TextField
+    label={label}
+    placeholder={placeholder}
+    type={type}
+    id={name}
+    className={className}
+    name={name}
+    {...input}
+    {...custom}
+  />
+
+);
+
+const renderTextField2 = ({ label, input, type, name, placeholder,className,
+                           meta: { touched, invalid, error },
+                           ...custom
+                         }) => (
+      <TextField
+        label={label}
+        placeholder={placeholder}
+        type={type}
+        id={name}
+        className={className}
+        name={name}
+        InputProps={{
+          startAdornment: <InputAdornment position="start">$</InputAdornment>,
+        }}
+        {...input}
+        {...custom}
+      />
+);
+
+
+const renderSelect = ({ input, type, placeholder,name, className,
+                 meta: { touched, invalid, error }, ...custom }) => (
+                  <CreatableSelect
+                    classNamePrefix="select"
+                    // isDisabled={isDisabled}
+                    isClearable={true}
+                    isSearchable={true}
+                    placeholder={placeholder}
+                    // defaultValue={options[0]}
+                    name={name}
+                    required
+                    id={name}
+                    className={className}
+                    options={options}
+                  />
+);
+
+const renderCascade = ({ className, meta: { touched, invalid, error }, ...custom }) => (
+        <Cascader
+          showSearch={{filter}}
+          options={options3}
+          onChange={onChange}
+          className={className}
+          placeholder="Please select the category"
+        />
+)
+const renderRadioGroup = ({input,className, name, ...rest}) => (
+  <RadioGroup aria-label={name} name={name}>
+    <FormControlLabel value="1" control={<Radio color="primary" />} label="Launching"/>
+    <FormControlLabel value="0" control={<Radio  color="primary" />} label="Not Available" />
+  </RadioGroup>
+);
+const renderTextEditor = ({input, editorState, className, name, ...rest}) => (
+      <Editor
+      editorState={editorState}
+      toolbarClassName="toolbarClassName"
+      wrapperClassName="wrapperClassName"
+      editorClassName="editorClassName"
+      // onEditorStateChange={onEditorStateChange}
+    />
+);
+
+
+let initialized = false;
+const EditForm = (props) => {
+  const {product, reset, pristine} = props;
+  const classes = useStyles();
+
+   const initEditorState = EditorState.createEmpty();
+  let [editorState, setEditorState ] = useState(initEditorState);
+
+    const uploadImage  = (event)=> {
+    console.log(event.target);
+      // console.log(typeof (img)) // file
+  };
+  return (
+    <Card className={classes.card}>
+      <CardHeader avatar={<LocalMall  fontSize="large" className={classes.tagIcon}/>} action={
+        <div>
+          <IconButton size="small"> <FiberManualRecord className={classes.stockIcon} fontSize="small"/>In Stock</IconButton>
+          <FiberManualRecord className={classes.lowIcon} fontSize="small"/>Low Stock
+          <FiberManualRecord className={classes.outIcon} fontSize="small"/>Out of Stock
+        </div>
+      }/>
+      <Divider variant="middle" className={classes.divider} />
+        <Grid container justify="flex-start" size="lg" direction="row" spacing={2}
+              alignItems="center">
+          <Grid item xs={4}>
+            <ImageUploader
+              withIcon={true}
+              withPreview={true}
+              withLabel={false}
+              buttonText="Upload Product Images Here"
+              onChange = {uploadImage}
+              imgExtension={[".jpg", ".gif", ".png", ".gif", ".svg"]}
+              maxFileSize={5242880}
+              fileSizeError="Image File size is too big"
+              errorClass={classes.errorMessage}
+              defaultImages={[product.image]}
+            />
+          </Grid>
+          <Grid item xs={8}>
+            <Typography variant='h6' color="textPrimary" display="block" className={classes.productInfo}>
+              Product Information
+              <Fab aria-label="Edit Product" size="small" color="primary" style={{marginLeft: 10}}>
+                <Edit/>
+              </Fab>
+            </Typography>
+            <form className={classes.form}>
+              <FormControl>
+                <InputLabel htmlFor="id">ID:</InputLabel>
+                <Input
+                  id="id"
+                  name="id"
+                  aria-describedby="id-helper-text"
+                  readOnly={true}
+                  placeholader="Type Product ID"
+                  type="text"
+                  className={classes.textField}
+                  fullWidth
+                  defaultValue={product.id}
+                  // value={newId}
+                  autoFocus
+                  />
+                <FormHelperText id="id-helper-text">readonly.</FormHelperText>
+              </FormControl>
+              <FormControl>
+                <InputLabel htmlFor="name">Product Name:</InputLabel>
+                <Input
+                  id="name"
+                  name="name"
+                  aria-describedby="name-helper-text"
+                  placeholader="Type Product Name"
+                  className={classes.textField}
+                  fullWidth
+                  type="text"
+                  defaultValue={product.name}
+                  // value={newId}
+                  required
+                />
+                <FormHelperText id="id-helper-text">readonly.</FormHelperText>
+              </FormControl>
+
+              <FormControl>
+                <InputLabel htmlFor="price">Product Price:</InputLabel>
+                <Input
+                  id="price"
+                  name="price"
+                  aria-describedby="price-helper-text"
+                  placeholader="Type Product Price"
+                  className={classes.textField}
+                  fullWidth
+                  type="number"
+                  step={0.01}
+                  min={0.00}
+                  max={9999.99}
+                  defaultValue={product.price}
+                  // value={newId}
+                  required
+                />
+                <FormHelperText id="price-helper-text">price between 0.00 ~ 9999.99.</FormHelperText>
+              </FormControl>
+              <FormControl>
+                <InputLabel htmlFor="stock">Product Stock:</InputLabel>
+                <Input
+                  id="stock"
+                  name="stock"
+                  aria-describedby="stock-helper-text"
+                  placeholader="Type Product Stock"
+                  className={classes.textField}
+                  fullWidth
+                  type="number"
+                  step={1}
+                  min={0}
+                  max={100000}
+                  defaultValue={product.stock}
+                  // value={newId}
+                  required
+                />
+                <FormHelperText id="stock-helper-text">stock between 0 ~ 100000.</FormHelperText>
+              </FormControl>
+              <Divider className={classes.divider2}/>
+              <FormControl>
+                <label className={classes.labelText}> Product Brand*: </label>
+                <CreatableSelect
+                  classNamePrefix="select"
+                  isClearable={true}
+                  isSearchable={true}
+                  placeholder="Select Product Brand..."
+                  defaultValue={options[0]}
+                  name="brand"
+                  id="brand"
+                  required
+                  className={classes.textField}
+                  options={options}
+                />
+              </FormControl>
+              <FormControl>
+                <label className={classes.labelText}> Product Categories*: </label>
+                <CreatableSelect
+                  classNamePrefix="Select Product Categories...."
+                  isClearable={true}
+                  isSearchable={true}
+                  placeholder={placeholder}
+                  defaultValue={options[0]}
+                  name="categories"
+                  id="categories"
+                  required
+                  className={classes.textField}
+                  options={options}
+                />
+              </FormControl>
+              <FormControl>
+                {/*<label className={classes.labelText}>Active Status*: </label>*/}
+                <InputLabel htmlFor="active">Product Active Status*:</InputLabel>
+                <RadioGroup aria-label="active" name="active">
+                  <FormControlLabel value="1" control={<Radio color="primary"  className={classes.textField} />} label="Launching"/>
+                  <FormControlLabel value="0" control={<Radio  color="primary"   className={classes.textField} />} label="Not Available" />
+                </RadioGroup>
+              </FormControl>
+              <FormControl>
+                <InputLabel htmlFor="description">Product Description:</InputLabel>
+                <Editor
+                  editorState={editorState}
+                  name="description"
+                  id="description"
+                  toolbarClassName="toolbarClassName"
+                  wrapperClassName="wrapperClassName"
+                  editorClassName="editorClassName"
+                  onEditorStateChange={onEditorStateChange}
+                />
+              </FormControl>
+                <TextField
+                  id="datetime-local"
+                  label="Create At"
+                  type="datetime-local"
+                  defaultValue="2017-05-24T10:30"
+                  className={classes.textField}
+                  disabled={true}
+                />
+                <TextField
+                  id="datetime-local"
+                  label="Last Modified"
+                  type="datetime-local"
+                  defaultValue="2017-05-24T10:30"
+                  className={classes.textField}
+                  disabled={true}
+                />
+              <Divider className={classes.divider2}/>
+              <div>
+                <Button type="submit" variant="contained" disabled={pristine} className={classes.submit}>
+                  <Save/> Save
+                </Button>
+                <Button type="reset" variant="contained" className={classes.reset} onClick={reset}>
+                  Reset
+                </Button>
+              </div>
+            </form>
+          </Grid>
+        </Grid>
+    </Card>
+  )
+};
+export default EditForm;
+
+{/*<div>*/}
+{/*  <Field*/}
+{/*    name="id"*/}
+{/*    component={renderTextField}*/}
+{/*    name="id"*/}
+{/*    name="id"*/}
+{/*    inputProps={*/}
+{/*      { readOnly: false}}*/}
+{/*    placeholader="Type Product ID"*/}
+{/*    label="Product ID"*/}
+{/*    className={classes.textField}*/}
+{/*    fullWidth*/}
+{/*    helperText="Product must be unique"*/}
+{/*    autoFocus*/}
+{/*  />*/}
+{/*  <Field*/}
+{/*    name="name"*/}
+{/*    component={renderTextField}*/}
+{/*    type="text"*/}
+{/*    required*/}
+{/*    placeholder="Type Product Name"*/}
+{/*    label="Product Name:"*/}
+{/*    className={classes.textField}*/}
+{/*    fullWidth*/}
+{/*  />*/}
+{/*  <Field*/}
+{/*    name="price"*/}
+{/*    component={renderTextField2}*/}
+{/*    type="number"*/}
+{/*    required*/}
+{/*    inputProps={*/}
+{/*      { step: 0.01, min: 0.00, max: 9999.99}}*/}
+{/*    placeholder="Type Product Price"*/}
+{/*    label="Price"*/}
+{/*    className={classes.textField}*/}
+{/*    fullWidth*/}
+{/*    helperText="Price between 0.00 ~ 9999.99"*/}
+{/*  />*/}
+{/*  <Field*/}
+{/*    name="stock"*/}
+{/*    component={renderTextField}*/}
+{/*    type="number"*/}
+{/*    required*/}
+{/*    inputProps={*/}
+{/*      { min: 0, max: 100000, step: 1}}*/}
+{/*    placeholder="Type Product Stock"*/}
+{/*    label="Stock:"*/}
+{/*    className={classes.textField}*/}
+{/*    fullWidth*/}
+{/*    helperText="Stock range should be 0-100000"*/}
+{/*  />*/}
+{/*  <Divider className={classes.divider2}/>*/}
+{/*  <label htmlFor="brand" className={classes.labelText}> Product Brand: </label>*/}
+{/*  <Field*/}
+{/*    name="brand"*/}
+{/*    component={renderSelect}*/}
+{/*    className="selectField"*/}
+{/*    required*/}
+{/*    type="text"*/}
+{/*    placeholder="Select one brand ..."*/}
+{/*  />*/}
+{/*  <label className={classes.labelText}> Product Categories*: </label>*/}
+{/*  <Field*/}
+{/*    name="category"*/}
+{/*    component={renderCascade}*/}
+{/*    className="selectField"*/}
+{/*  />*/}
+{/*  <label className={classes.labelText}>Active Status*: </label>*/}
+{/*  <Field name="status"  className={classes.textField} component={renderRadioGroup} />*/}
+{/*  <Field name="description" component={renderTextEditor} />*/}
+{/*  <TextField*/}
+{/*    id="datetime-local"*/}
+{/*    label="Create At"*/}
+{/*    type="datetime-local"*/}
+{/*    defaultValue="2017-05-24T10:30"*/}
+{/*    className={classes.textField}*/}
+{/*    disabled={true}*/}
+{/*  />*/}
+{/*  <TextField*/}
+{/*    id="datetime-local"*/}
+{/*    label="Last Modified"*/}
+{/*    type="datetime-local"*/}
+{/*    defaultValue="2017-05-24T10:30"*/}
+{/*    className={classes.textField}*/}
+{/*    disabled={true}*/}
+{/*  />*/}
