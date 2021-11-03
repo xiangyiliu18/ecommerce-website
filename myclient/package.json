@@ -55,7 +55,7 @@
     "serve": "^11.1.0",
     "store": "^2.0.12",
     "tinycolor2": "^1.4.1",
-    "validator": "^11.1.0"
+    "validator": "^13.7.0"
   },
   "scripts": {
     "start": "react-app-rewired start",
